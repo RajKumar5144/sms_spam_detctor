@@ -18,3 +18,4 @@ A machine learning based SMS spam classifier built using TF-IDF and Scikit-learn
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+http://localhost:8508/
