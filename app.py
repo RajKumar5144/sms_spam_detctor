@@ -1,26 +1,111 @@
 import streamlit as st
 import pickle
 
-st.write("RUNNING: SMS SPAM DETECTION PROJECT")
+# ---------------- Page Config (SEO + UI) ----------------
+st.set_page_config(
+    page_title="SMS Spam Detection | ML App",
+    page_icon="📩",
+    layout="centered"
+)
 
-# Load model and vectorizer
-model = pickle.load(open("model.pkl", "rb"))
-vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
+# ---------------- Load Model ----------------
+@st.cache_resource
+def load_model():
+    model = pickle.load(open("model.pkl", "rb"))
+    vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
+    return model, vectorizer
 
-st.title("📩 SMS Spam Detection App")
+model, vectorizer = load_model()
 
-message = st.text_area("Enter the SMS text")
+# ---------------- Sidebar ----------------
+st.sidebar.title("📊 Project Info")
+st.sidebar.markdown("""
+**SMS Spam Detection App**
 
-if st.button("Predict"):
+**Tech Stack**
+- Python
+- Scikit-learn
+- NLP (TF-IDF)
+- Streamlit
+
+**Model**
+- Logistic Regression  
+- Trained on labeled SMS data  
+
+**Use Case**
+- Detect spam messages  
+- Fraud prevention  
+- SMS filtering systems
+""")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("👨‍💻 *Built for ML & Data Science Portfolio*")
+
+# ---------------- Main UI ----------------
+st.markdown(
+    """
+    <h1 style='text-align: center;'>📩 SMS Spam Detection</h1>
+    <p style='text-align: center; color: gray;'>
+    Enter an SMS message and check whether it is <b>Spam</b> or <b>Not Spam</b> using Machine Learning
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
+# ---------------- Input Section ----------------
+st.markdown("### ✍️ Enter SMS Text")
+message = st.text_area(
+    "",
+    placeholder="Example: Congratulations! You won a free coupon. Call now...",
+    height=150
+)
+
+# ---------------- Prediction ----------------
+if st.button("🔍 Predict", use_container_width=True):
+
     if message.strip() == "":
-        st.warning("Please enter a message")
+        st.warning("⚠️ Please enter a message to analyze.")
     else:
         vectorized_msg = vectorizer.transform([message]).toarray()
-
-        # 🔑 Use probability instead of hard class
         spam_prob = model.predict_proba(vectorized_msg)[0][1]
 
-        if spam_prob >= 0.3:   # threshold for imbalanced data
-            st.error(f"🚨 This message is SPAM (confidence: {spam_prob:.2f})")
+        st.markdown("---")
+        st.markdown("### 📈 Prediction Result")
+
+        # Probability bar
+        st.progress(spam_prob)
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("Spam Probability", f"{spam_prob:.2%}")
+
+        with col2:
+            st.metric("Not Spam Probability", f"{(1 - spam_prob):.2%}")
+
+        # Decision Threshold
+        if spam_prob >= 0.3:
+            st.error(
+                f"""
+                🚨 **SPAM DETECTED**  
+                This message is likely spam.
+                """
+            )
         else:
-            st.success(f"✅ This message is NOT Spam (confidence: {1 - spam_prob:.2f})")
+            st.success(
+                f"""
+                ✅ **NOT SPAM**  
+                This message appears safe.
+                """
+            )
+
+# ---------------- Footer ----------------
+st.markdown("---")
+st.markdown(
+    """
+    <p style='text-align: center; color: gray; font-size: 14px;'>
+    Built using Machine Learning & NLP | Streamlit Web App
+    </p>
+    """,
+    unsafe_allow_html=True
+)
